@@ -6,20 +6,18 @@ import copy
 
 
 def load_boards(values):
-    empty = 0
     grid = [[0 for i in range(9)] for i in range(9)]
     values = [int(i) for i in values]
     for i in range(9):
         for j in range(9):
             grid[i][j] = values[i * 9 + j]
-            if values[i * 9 + j] == 0:
-                empty += 1
-    return grid, empty
+    return grid
 
 
-def solve_board(missing_values):
-    grid = copy.deepcopy(board)    
-    while missing_values >=  0:
+def solve_board():
+    grid = copy.deepcopy(board) 
+    solved = False   
+    while not solved:
         column_array = []
         for i in range(9):
             curr_column = []
@@ -69,16 +67,16 @@ def solve_board(missing_values):
                 for k in range(9):
                     if valuey in possible_grid[k][i]:
                         grid[k][i] = valuey
-                        missing_values -= 1
                         break
-        for i in range(9): 
             for j in range(possible_row[i].count(1)):
                 valuex = [i for i, n in enumerate(possible_row[i]) if n == 1][j] + 1
                 for k in range(9):
                     if valuex in possible_grid[i][k]:
                         grid[i][k] = valuex
-                        missing_values -= 1
                         break
+
+        solved = check_solved(grid)
+      
     return grid
 
 
@@ -293,6 +291,14 @@ def clear_board():
     pygame.display.update()
 
 
+def check_solved(curr_board):
+    for i in range(DIMENSION):
+        if curr_board[i].count(0) > 0:
+            return False
+    return True
+
+
+
 pygame.init()
 
 screen_side = DIMENSION * SQUARESIZE + (2 * BORDER)
@@ -310,7 +316,8 @@ while play_again:
 
     reset, new_puzzle, solve = create_buttons()
     
-    board, blank_cells = load_boards(puzzles[random.randint(0, len(puzzles) - 1)])
+    board = load_boards(puzzles[random.randint(0, len(puzzles) - 1)])
+    
     player_board = copy.deepcopy(board)
 
     draw_values(True)
@@ -350,13 +357,13 @@ while play_again:
                     if new_puzzle.collidepoint(event.pos) or reset.collidepoint(event.pos):
                         if new_puzzle.collidepoint(event.pos):
                             clear_board()
-                            board, blank_cells = load_boards(puzzles[random.randint(0, 3)])
+                            board = load_boards(puzzles[random.randint(0, len(puzzles) - 1)])
                         player_board = copy.deepcopy(board)
                         draw_values(True)
                         selected = False
                         start_time = pygame.time.get_ticks()
                     elif solve.collidepoint(event.pos):
-                        complete_board = solve_board(blank_cells)
+                        complete_board = solve_board()
                         show_solution()
                         game = False
 
@@ -390,6 +397,7 @@ while play_again:
                             selected = False
                         else:
                             draw_values(False, conflictx, conflicty)
-                            
+        if check_solved(player_board):
+            game = False                   
     play_again = end_game()
                     
